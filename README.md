@@ -29,17 +29,20 @@ iconpush uses a different, official iOS mechanism: **configuration profiles** wi
 ## Features
 
 - 📲 **USB push** (Windows app): detects your iPhone, lists the apps **actually installed on it**, and sends the profile directly.
-- 🎨 **Icon packs**: Liquid Glass, Mono Noir, Paper, Pastel, Néon, Sunset… generated for 50+ apps, and community packs are fetched from this repo.
-- 🖼 **Your own images** for any app.
-- 👀 **Live preview** of your home screen.
+- 🎨 **Icon packs**: Liquid Glass, Mono Noir, Paper, Pastel, Néon, Sunset… generated for 50+ apps.
+- 🏷 **Official logos** in one click: downloads brand logos from [Simple Icons](https://simpleicons.org) (CC0) and unlocks 3 more packs (brand colors, OLED black, Liquid Glass).
+- 🖼 **Your own images** for any app, or a **whole folder at once** (e.g. icons exported from Figma, matched to apps by file name).
+- 📱 **Realistic iPhone preview** (Dynamic Island, dock…) that you can **export as a PNG** to share your setup.
+- 🔌 **Driver helper**: detects Apple's USB driver and installs it for you (iTunes 64-bit from apple.com with signature check, or Apple Devices from the Microsoft Store).
 - 🙈 **Hide labels** for a clean, text-free home screen.
 - 🌐 **Web version**: no install, downloads the `.mobileconfig` instead.
-- 🔒 **Local & private**: nothing is uploaded anywhere. The desktop app only listens on `127.0.0.1`.
+- 🦀 **Native Windows app** in Rust: a single ~10 MB `.exe`, no browser, no runtime to install.
+- 🔒 **Local & private**: nothing is uploaded anywhere.
 
 ## Quick start
 
-1. Install **Apple Devices** from the Microsoft Store (or iTunes) so Windows can talk to iPhones.
-2. Download **[iconpush.exe](https://github.com/MattRvfl/iconpush/releases/latest)** and run it. Your browser opens.
+1. Download **[iconpush.exe](https://github.com/MattRvfl/iconpush/releases/latest)** and run it. No install needed.
+2. If the status says **Apple driver missing**, open the **Pilotes** tab and install it from there.
 3. Plug in your iPhone, unlock it and tap **Trust**.
 4. Pick a pack and your apps, then click **Send**.
 5. On the iPhone: **Settings → Profile Downloaded → Install**.
@@ -64,17 +67,18 @@ Good to know:
 ## How it works
 
 ```
-iconpush.exe ──HTTP (127.0.0.1)──▶ browser UI (packs, preview, icon rendering)
-     │
-     └──usbmuxd (Apple Mobile Device Service)──▶ iPhone
-          ├─ lockdown          pairing / "Trust this computer"
-          ├─ installation_proxy  list of installed apps
-          └─ MCInstall          "InstallProfile" → Settings › Profile Downloaded
+iconpush.exe (egui window)
+  ├─ render.rs    draws each icon (resvg + tiny-skia), 180×180 PNG
+  ├─ profile.rs   builds the .mobileconfig (one com.apple.webClip.managed per icon)
+  └─ worker.rs ──usbmuxd (Apple Mobile Device Service)──▶ iPhone
+                   ├─ lockdown            pairing / "Trust this computer"
+                   ├─ installation_proxy  list of installed apps
+                   └─ MCInstall           "InstallProfile" → Settings › Profile Downloaded
 ```
 
-- The UI renders each icon on a `<canvas>` and builds the `.mobileconfig` (one `com.apple.webClip.managed` payload per icon).
-- The Rust app is built on [`idevice`](https://crates.io/crates/idevice), a pure-Rust implementation of Apple's device protocols, plus a small `MCInstall` client ([`src/mcinstall.rs`](src/mcinstall.rs)).
-- The exact same UI is published as the web version.
+- Native UI with [egui](https://github.com/emilk/egui); USB work runs on a background thread so the window never freezes.
+- Device protocols via [`idevice`](https://crates.io/crates/idevice) (pure Rust), plus a small `MCInstall` client ([`src/mcinstall.rs`](src/mcinstall.rs)).
+- Apps, packs and glyphs live in [`web/`](web/) and are shared with the web version (plain HTML/JS, same rendering rules).
 
 ## Build from source
 

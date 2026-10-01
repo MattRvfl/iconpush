@@ -44,9 +44,12 @@ La méthode USB est la plus pratique : elle voit les apps installées sur ton iP
 
 ### Étape 1 : permettre à Windows de reconnaître l'iPhone
 
-Installe **Appareils Apple** (« Apple Devices ») depuis le **Microsoft Store**. C'est gratuit. iTunes fonctionne aussi.
+Windows a besoin du **pilote USB d'Apple**. iconpush le détecte tout seul : si la pastille en haut à droite affiche « Pilote Apple manquant », clique dessus (ou ouvre l'onglet **Pilotes**). Tu as deux choix :
 
-> Pourquoi ? C'est le pilote d'Apple qui permet à Windows de parler à un iPhone. Sans lui, aucun logiciel ne peut le voir.
+- **iTunes 64 bits** : bouton « Télécharger et installer ». iconpush le télécharge depuis apple.com, vérifie qu'il est bien signé par Apple, puis lance l'installation (Windows te demande d'accepter).
+- **Appareils Apple** : bouton « Ouvrir le Microsoft Store », puis « Installer ».
+
+> Pourquoi ? Sans ce pilote, aucun logiciel ne peut voir un iPhone sur Windows. Il s'installe sur C:, comme tous les pilotes.
 
 ### Étape 2 : télécharger iconpush
 
@@ -56,7 +59,7 @@ Installe **Appareils Apple** (« Apple Devices ») depuis le **Microsoft Store**
 
 > ⚠️ Windows peut afficher « Windows a protégé votre ordinateur », parce que l'application est nouvelle et non signée. Clique sur **Informations complémentaires**, puis sur **Exécuter quand même**. Le code source est public sur GitHub, tu peux le vérifier.
 
-Une fenêtre noire s'ouvre, puis ton navigateur affiche iconpush. **Laisse la fenêtre noire ouverte** : c'est elle qui communique avec l'iPhone. Ferme-la quand tu as fini.
+La fenêtre d'iconpush s'ouvre. En haut à droite, une pastille indique l'état de la connexion avec ton iPhone.
 
 ### Étape 3 : brancher l'iPhone
 
@@ -64,14 +67,16 @@ Une fenêtre noire s'ouvre, puis ton navigateur affiche iconpush. **Laisse la fe
 2. **Déverrouille-le.**
 3. S'il demande « **Se fier à cet ordinateur ?** », touche **Se fier** et entre ton code.
 
-En haut de la page, tu dois voir le nom de ton iPhone et sa version d'iOS, avec un point vert.
+En haut à droite, tu dois voir le nom de ton iPhone et sa version d'iOS, avec un point vert.
 
 ### Étape 4 : choisir et envoyer
 
 1. **Choisis un pack** à gauche. Tu peux chercher par style : « glass », « minimal », « néon »…
 2. **Coche tes apps** au milieu. Par défaut, seules les apps installées sur ton iPhone sont affichées.
 3. Vérifie l'**aperçu** à droite.
-4. Clique sur **📲 Envoyer sur ton iPhone**.
+4. Clique sur **Envoyer sur [ton iPhone]**.
+
+Pas de câble sous la main ? **Enregistrer le fichier .mobileconfig…** crée le profil, et tu l'envoies ensuite par AirDrop, iCloud Drive ou mail.
 
 Passe ensuite à la partie 5.
 
@@ -119,7 +124,23 @@ Pour ne garder que tes nouvelles icônes :
 
 ## 7. Mettre tes propres images
 
-Sur chaque app, clique sur 🖼 et choisis une image (PNG ou JPG). Elle remplace l'icône générée par le pack.
+### Les logos officiels
+
+Dans l'onglet **Bibliothèque**, clique sur **Télécharger les logos**. iconpush récupère les vrais logos (Spotify, Instagram, WhatsApp…) depuis [Simple Icons](https://simpleicons.org), une bibliothèque open source, et ajoute 3 packs : **Logos officiels**, **Logos sur noir** et **Logos Liquid Glass**.
+
+### Une image pour une app
+
+Sur chaque app, clique sur **Image** (dans l'application Windows) ou 🖼 (dans la version web) et choisis une image (PNG, JPG ou WebP). Elle remplace l'icône générée par le pack.
+
+### Tout un dossier (Figma, Canva…)
+
+Dans l'onglet **Bibliothèque**, clique sur **Choisir un dossier…**. iconpush associe chaque image à son app grâce au nom du fichier : `spotify.png`, `Instagram.png`, `Google Maps.png`…
+
+Depuis **Figma** : renomme chaque icône comme l'app, sélectionne-les, puis **Export → PNG → 3x**.
+
+### Partager ton setup
+
+Le bouton **Exporter l'aperçu** enregistre l'iPhone de l'aperçu en image PNG, prête à poster.
 
 - Utilise de préférence une image **carrée** d'au moins 180 × 180 pixels.
 - iOS arrondit les coins tout seul.

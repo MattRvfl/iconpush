@@ -9,17 +9,16 @@ use idevice::lockdown::LockdownClient;
 use idevice::provider::UsbmuxdProvider;
 use idevice::usbmuxd::{Connection, UsbmuxdAddr, UsbmuxdConnection, UsbmuxdDevice};
 use idevice::{IdeviceError, IdeviceService};
-use serde::Serialize;
 
 use crate::mcinstall::McInstallClient;
+use crate::profile::random_uuid;
 
 const LABEL: &str = "iconpush";
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DeviceInfo {
     pub udid: String,
     pub name: String,
-    #[serde(rename = "iosVersion")]
     pub ios_version: String,
     pub model: String,
 }
@@ -51,21 +50,6 @@ fn provider(dev: &UsbmuxdDevice) -> UsbmuxdProvider {
     dev.to_provider(UsbmuxdAddr::default(), LABEL)
 }
 
-/// Random UUID-shaped host id, without pulling a uuid crate.
-fn random_host_id() -> String {
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
-    let mut bytes = Vec::with_capacity(16);
-    for i in 0..2u64 {
-        let mut h = RandomState::new().build_hasher();
-        h.write_u64(i);
-        h.write_u128(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos());
-        bytes.extend_from_slice(&h.finish().to_be_bytes());
-    }
-    let hex: String = bytes.iter().map(|b| format!("{b:02X}")).collect();
-    format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32])
-}
-
 /// Make sure this computer is trusted by the phone. If it isn't, start pairing in the
 /// background: the phone shows "Trust this computer?" and we save the record once accepted.
 async fn ensure_paired(dev: &UsbmuxdDevice) -> Result<(), String> {
@@ -90,7 +74,7 @@ async fn ensure_paired(dev: &UsbmuxdDevice) -> Result<(), String> {
             let mut lockdown = LockdownClient::connect(&provider(&dev)).await.map_err(|e| e.to_string())?;
             // Loops until the user answers the "Trust" dialog.
             let record = lockdown
-                .pair(random_host_id(), buid, Some(LABEL))
+                .pair(random_uuid(), buid, Some(LABEL))
                 .await
                 .map_err(|e| e.to_string())?;
             let bytes = record.serialize().map_err(|e| e.to_string())?;
@@ -162,7 +146,7 @@ pub async fn list() -> Result<Vec<DeviceInfo>, String> {
 }
 
 /// Bundle ids of every app on the phone (user and system).
-pub async fn installed_apps(udid: &str) -> Result<Vec<String>, String> {
+pub async fn installed_apps(udid: &str) -> Result<HashSet<String>, String> {
     let dev = find(udid).await?;
     ensure_paired(&dev).await?;
     let mut client = InstallationProxyClient::connect(&provider(&dev))

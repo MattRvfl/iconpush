@@ -28,9 +28,9 @@ See [docs/PACKS.md](docs/PACKS.md).
 
 ## 4. Code
 
-- `web/` — the UI (plain HTML/CSS/JS modules, no build step). Shared by the website and the desktop app.
-- `src/` — the Rust desktop app: local server (`main.rs`), USB device access (`device.rs`), profile service (`mcinstall.rs`).
+- `src/` — the native Rust app: UI (`main.rs`, egui), icon rendering (`render.rs`), profile builder (`profile.rs`), USB thread (`worker.rs`, `device.rs`, `mcinstall.rs`).
+- `web/` — the web version (plain HTML/CSS/JS modules, no build step) **and** the shared data (`data/apps.json`, `packs/`, `glyphs/`) embedded in the desktop app. If you change how icons are drawn, update both `src/render.rs` and `web/js/render.js`.
 
-Build: `cargo build`. Run: `cargo run`, then the browser opens.
+Build: `cargo build`. Run: `cargo run`.
 
 Keep pull requests focused, and describe how you tested (iOS version, device).

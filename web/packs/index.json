@@ -1,0 +1,85 @@
+{
+  "_comment": "Generated packs describe a style; every app gets an icon in that style. Image packs can also map app ids to PNG files (see docs/PACKS.md).",
+  "packs": [
+    {
+      "id": "liquid-glass",
+      "name": "Liquid Glass",
+      "author": "iconpush",
+      "description": "Verre dépoli sombre, reflets doux, inspiré d'iOS 26.",
+      "tags": ["glass", "sombre", "ios"],
+      "style": {
+        "background": { "type": "linear", "angle": 160, "stops": ["#2b3245", "#0f1220"] },
+        "glass": true,
+        "glyph": { "color": "#ffffff", "scale": 0.5, "stroke": 1.6 }
+      }
+    },
+    {
+      "id": "mono-noir",
+      "name": "Mono Noir",
+      "author": "iconpush",
+      "description": "Noir profond et traits blancs fins. Minimaliste.",
+      "tags": ["minimal", "noir", "sombre"],
+      "style": {
+        "background": { "type": "solid", "color": "#000000" },
+        "glyph": { "color": "#f5f5f7", "scale": 0.46, "stroke": 1.4 }
+      }
+    },
+    {
+      "id": "paper",
+      "name": "Papier",
+      "author": "iconpush",
+      "description": "Fond crème et encre noire, comme un carnet.",
+      "tags": ["minimal", "clair"],
+      "style": {
+        "background": { "type": "solid", "color": "#f4efe6" },
+        "glyph": { "color": "#1c1c1e", "scale": 0.46, "stroke": 1.6 }
+      }
+    },
+    {
+      "id": "pastel",
+      "name": "Pastel",
+      "author": "iconpush",
+      "description": "Une couleur douce par catégorie d'app.",
+      "tags": ["couleurs", "clair"],
+      "style": {
+        "background": {
+          "type": "category",
+          "colors": {
+            "music": "#ffd6e0", "social": "#e2d6ff", "messaging": "#d6f5e3", "video": "#ffe4c7",
+            "tools": "#d6ecff", "travel": "#fff3c4", "system": "#e9e9ee"
+          }
+        },
+        "glyph": { "color": "#2c2c34", "scale": 0.48, "stroke": 1.8 }
+      }
+    },
+    {
+      "id": "neon",
+      "name": "Néon",
+      "author": "iconpush",
+      "description": "Fond noir et symboles lumineux, ambiance cyberpunk.",
+      "tags": ["couleurs", "sombre", "glow"],
+      "style": {
+        "background": { "type": "solid", "color": "#07070c" },
+        "glyph": {
+          "color": "category",
+          "colors": {
+            "music": "#ff3df2", "social": "#a35bff", "messaging": "#39ff88", "video": "#ff8a3d",
+            "tools": "#3dd8ff", "travel": "#ffe13d", "system": "#e0e0ff"
+          },
+          "scale": 0.5, "stroke": 1.8, "glow": 14
+        }
+      }
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "author": "iconpush",
+      "description": "Dégradé orange-rose et symboles blancs.",
+      "tags": ["couleurs", "dégradé"],
+      "style": {
+        "background": { "type": "linear", "angle": 135, "stops": ["#ff9a5a", "#ff4f8b", "#8b5cf6"] },
+        "glyph": { "color": "#ffffff", "scale": 0.48, "stroke": 1.8 }
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+/target
+*.mobileconfig
+!/prototype/*.mobileconfig
+.DS_Store
+Thumbs.db

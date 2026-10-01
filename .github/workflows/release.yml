@@ -1,0 +1,41 @@
+name: Release
+
+# Builds iconpush.exe and attaches it to a GitHub Release: either push a tag like v0.1.0,
+# or create a release on github.com (Releases → Draft a new release).
+on:
+  push:
+    tags: ["v*"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item target/release/iconpush.exe dist/iconpush.exe
+          (Get-FileHash dist/iconpush.exe -Algorithm SHA256).Hash.ToLower() + "  iconpush.exe" | Out-File dist/iconpush.exe.sha256 -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iconpush-windows
+          path: dist/
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/iconpush.exe
+            dist/iconpush.exe.sha256
+          generate_release_notes: true

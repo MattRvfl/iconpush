@@ -10,6 +10,7 @@ use crate::theme::{self, ACCENT, BORDER, CARD, DANGER, MUTED, PANEL};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
+    Phone,
     Icons,
     Library,
     Drivers,
@@ -96,6 +97,7 @@ pub fn title_bar(ui: &mut egui::Ui, tab: &mut Tab, status: &Status) {
             logo(ui);
             ui.label(RichText::new("iconpush").font(theme::semibold(16.0)));
             ui.add_space(18.0);
+            tab_button(ui, tab, Tab::Phone, "iPhone");
             tab_button(ui, tab, Tab::Icons, "Icônes");
             tab_button(ui, tab, Tab::Library, "Bibliothèque");
             tab_button(ui, tab, Tab::Drivers, "Pilotes");

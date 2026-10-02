@@ -112,6 +112,13 @@ async fn lockdown(dev: &UsbmuxdDevice) -> Result<LockdownClient, String> {
     Ok(lockdown)
 }
 
+/// Authenticated lockdown session + provider for the phone `udid` (used by phoneinfo.rs).
+pub async fn session(udid: &str) -> Result<(LockdownClient, UsbmuxdProvider), String> {
+    let dev = find(udid).await?;
+    let lockdown = lockdown(&dev).await?;
+    Ok((lockdown, provider(&dev)))
+}
+
 async fn value(lockdown: &mut LockdownClient, key: &str) -> String {
     lockdown
         .get_value(Some(key), None)

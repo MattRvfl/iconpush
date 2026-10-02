@@ -11,12 +11,14 @@ const POLL_EVERY: Duration = Duration::from_secs(2);
 
 pub enum Command {
     LoadApps(String),
+    LoadInfo(String),
     Push { udid: String, profile: Vec<u8> },
 }
 
 pub enum Event {
     Devices(Result<Vec<DeviceInfo>, String>),
     Apps { udid: String, result: Result<HashSet<String>, String> },
+    Info(Result<crate::phoneinfo::PhoneInfo, String>),
     Pushed(Result<(), String>),
 }
 
@@ -47,6 +49,7 @@ pub fn spawn(ctx: eframe::egui::Context) -> (Sender<Command>, Receiver<Event>) {
                     let result = rt.block_on(device::installed_apps(&udid));
                     Event::Apps { udid, result }
                 }
+                Ok(Command::LoadInfo(udid)) => Event::Info(rt.block_on(crate::phoneinfo::read(&udid))),
                 Ok(Command::Push { udid, profile }) => Event::Pushed(rt.block_on(device::push_profile(&udid, profile))),
                 Err(RecvTimeoutError::Timeout) => Event::Devices(rt.block_on(device::list())),
                 Err(RecvTimeoutError::Disconnected) => return, // window closed

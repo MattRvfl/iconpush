@@ -34,6 +34,7 @@ iconpush uses a different, official iOS mechanism: **configuration profiles** wi
 - 🖼 **Your own images** for any app, or a **whole folder at once** (e.g. icons exported from Figma, matched to apps by file name).
 - 📱 **Realistic iPhone preview** (Dynamic Island, dock…) that you can **export as a PNG** to share your setup.
 - 🔌 **Driver helper**: detects Apple's USB driver and installs it for you (iTunes 64-bit from apple.com with signature check, or Apple Devices from the Microsoft Store).
+- 📊 **iPhone tab** (read-only): battery level, battery health & charge cycles, storage, model, iOS version and installed-app count — nothing is modified on the device.
 - 🙈 **Hide labels** for a clean, text-free home screen.
 - 🌐 **Web version**: no install, downloads the `.mobileconfig` instead.
 - 🦀 **Native Windows app** in Rust: a single ~10 MB `.exe`, no browser, no runtime to install.

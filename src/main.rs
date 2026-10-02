@@ -10,6 +10,7 @@ mod drivers;
 mod library;
 mod mcinstall;
 mod phone;
+mod phoneinfo;
 mod profile;
 mod render;
 mod tabs;
@@ -69,6 +70,11 @@ struct IconPush {
     hide_labels: bool,
     export_rect: Option<egui::Rect>,
 
+    phone_info: Option<phoneinfo::PhoneInfo>,
+    info_loading: bool,
+    info_requested: f64,
+    show_serial: bool,
+
     devices: Vec<DeviceInfo>,
     device_error: Option<String>,
     installed: Option<(String, HashSet<String>)>,
@@ -114,6 +120,10 @@ impl IconPush {
             only_installed: true,
             hide_labels: false,
             export_rect: None,
+            phone_info: None,
+            info_loading: false,
+            info_requested: f64::NEG_INFINITY,
+            show_serial: false,
             devices: Vec::new(),
             device_error: None,
             installed: None,
@@ -127,7 +137,8 @@ impl IconPush {
         app.tab = match std::env::var("ICONPUSH_TAB").as_deref() {
             Ok("library") => Tab::Library,
             Ok("drivers") => Tab::Drivers,
-            _ => Tab::Icons,
+            Ok("icons") => Tab::Icons,
+            _ => Tab::Phone,
         };
         app.rebuild_packs();
         if std::env::var_os("ICONPUSH_DOWNLOAD_LOGOS").is_some() {
@@ -218,6 +229,14 @@ impl IconPush {
                 Event::Devices(Err(e)) => {
                     self.devices.clear();
                     self.device_error = Some(e);
+                    self.phone_info = None;
+                }
+                Event::Info(result) => {
+                    self.info_loading = false;
+                    match result {
+                        Ok(info) => self.phone_info = Some(info),
+                        Err(e) => self.device_error = Some(e),
+                    }
                 }
                 Event::Apps { udid, result } => {
                     if let Ok(set) = result {
@@ -743,6 +762,36 @@ impl eframe::App for IconPush {
         let side = Frame::new().fill(PANEL).inner_margin(Margin::same(14)).stroke(Stroke::new(1.0, BORDER));
         let central = Frame::new().fill(BG).inner_margin(Margin::same(14));
         match self.tab {
+            Tab::Phone => {
+                // Refresh the phone info every 20 s while this tab is open (battery level changes).
+                let now = ctx.input(|i| i.time);
+                let udid = self.device().map(|d| d.udid.clone());
+                if let Some(udid) = &udid {
+                    let stale = self.phone_info.as_ref().is_none_or(|i| i.name != self.device().map(|d| d.name.clone()).unwrap_or_default());
+                    if !self.info_loading && (stale || now - self.info_requested > 20.0) {
+                        self.info_loading = true;
+                        self.info_requested = now;
+                        let _ = self.tx.send(Command::LoadInfo(udid.clone()));
+                    }
+                }
+                let refresh = egui::CentralPanel::default()
+                    .frame(central.inner_margin(Margin::same(28)))
+                    .show(ui, |ui| {
+                        tabs::phone(
+                            ui,
+                            self.phone_info.as_ref(),
+                            self.info_loading,
+                            udid.is_some(),
+                            self.device_error.as_deref(),
+                            &mut self.show_serial,
+                        )
+                    })
+                    .inner;
+                if refresh {
+                    self.info_requested = f64::NEG_INFINITY;
+                }
+                ctx.request_repaint_after(std::time::Duration::from_secs(5));
+            }
             Tab::Icons => {
                 egui::Panel::left("packs").frame(side).resizable(false).exact_size(290.0).show(ui, |ui| self.packs_panel(ui));
                 egui::Panel::right("preview").frame(side).resizable(false).exact_size(340.0).show(ui, |ui| self.preview_panel(ui));

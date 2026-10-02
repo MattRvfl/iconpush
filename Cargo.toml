@@ -16,6 +16,7 @@ idevice = { version = "0.1.68", default-features = false, features = [
     "usbmuxd",
     "pair",
     "installation_proxy",
+    "diagnostics_relay",
 ] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 plist = "1"

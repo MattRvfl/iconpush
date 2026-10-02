@@ -7,6 +7,187 @@ use eframe::egui::{self, Color32, RichText, Vec2};
 use crate::drivers::{self, InstallState};
 use crate::theme::{self, MUTED, OK, WARN};
 
+// ------------------------------------------------------------------ iPhone
+
+fn gb(bytes: u64) -> String {
+    // Apple counts storage in base 1000, like Settings.
+    format!("{:.1} Go", bytes as f64 / 1e9)
+}
+
+fn bar(ui: &mut egui::Ui, fraction: f32, color: Color32) {
+    ui.add(egui::ProgressBar::new(fraction.clamp(0.0, 1.0)).desired_height(10.0).fill(color).corner_radius(5));
+}
+
+fn big_value(ui: &mut egui::Ui, value: &str, unit: &str) {
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(value).font(theme::semibold(34.0)));
+        ui.label(RichText::new(unit).color(MUTED));
+    });
+}
+
+fn row(ui: &mut egui::Ui, label: &str, value: &str) {
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(label).color(MUTED));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(value);
+        });
+    });
+}
+
+/// Returns true when the user asks for a refresh.
+pub fn phone(
+    ui: &mut egui::Ui,
+    info: Option<&crate::phoneinfo::PhoneInfo>,
+    loading: bool,
+    connected: bool,
+    error: Option<&str>,
+    show_serial: &mut bool,
+) -> bool {
+    let mut refresh = false;
+    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+        ui.set_max_width(980.0);
+
+        let Some(info) = info.filter(|_| connected) else {
+            ui.label(RichText::new("Ton iPhone").font(theme::semibold(22.0)));
+            ui.add_space(14.0);
+            theme::section(ui, |ui| {
+                if connected || loading {
+                    ui.horizontal(|ui| {
+                        ui.spinner();
+                        ui.label("Lecture des informations de l'iPhone…");
+                    });
+                } else {
+                    ui.label(RichText::new("Aucun iPhone connecté").font(theme::semibold(17.0)));
+                    ui.label("1. Branche ton iPhone avec un câble USB.");
+                    ui.label("2. Déverrouille-le.");
+                    ui.label("3. Touche « Se fier » quand il te le demande, puis entre ton code.");
+                    if let Some(e) = error {
+                        ui.add_space(6.0);
+                        ui.label(RichText::new(e).small().color(WARN));
+                    }
+                }
+            });
+            return;
+        };
+
+        // Header.
+        ui.horizontal(|ui| {
+            ui.vertical(|ui| {
+                ui.label(RichText::new(&info.name).font(theme::semibold(24.0)));
+                ui.label(RichText::new(format!("{} · iOS {} ({})", info.model_name, info.ios, info.build)).color(MUTED));
+            });
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if loading {
+                    ui.spinner();
+                } else if ui.button("Actualiser").clicked() {
+                    refresh = true;
+                }
+            });
+        });
+        ui.add_space(12.0);
+
+        ui.columns(2, |cols| {
+            // Battery level.
+            theme::section(&mut cols[0], |ui| {
+                ui.label(RichText::new("Batterie").font(theme::semibold(16.0)));
+                match info.battery_level {
+                    Some(level) => {
+                        big_value(ui, &level.to_string(), "%");
+                        let color = if level <= 20 { Color32::from_rgb(240, 80, 80) } else { OK };
+                        bar(ui, level as f32 / 100.0, color);
+                        ui.label(match info.charging {
+                            Some(true) => "En charge",
+                            Some(false) => "Sur batterie",
+                            None => "",
+                        });
+                    }
+                    None => {
+                        ui.label(RichText::new("Indisponible").color(MUTED));
+                    }
+                }
+            });
+
+            // Battery health.
+            theme::section(&mut cols[1], |ui| {
+                ui.label(RichText::new("Santé de la batterie").font(theme::semibold(16.0)));
+                match info.health_percent() {
+                    Some(h) => {
+                        big_value(ui, &format!("{h:.0}"), "% de capacité maximale");
+                        let (color, verdict) = if h >= 80.0 {
+                            (OK, "Bon état")
+                        } else {
+                            (WARN, "Usée : Apple conseille un remplacement sous 80 %")
+                        };
+                        bar(ui, h as f32 / 100.0, color);
+                        ui.label(RichText::new(verdict).color(color));
+                    }
+                    None => {
+                        ui.label(RichText::new("Indisponible sur ce modèle ou cette version d'iOS").color(MUTED));
+                    }
+                }
+                ui.add_space(4.0);
+                if let Some(c) = info.cycle_count {
+                    row(ui, "Cycles de charge", &c.to_string());
+                }
+                if let (Some(max), Some(design)) = (info.max_mah, info.design_mah) {
+                    row(ui, "Capacité réelle / d'origine", &format!("{max} / {design} mAh"));
+                }
+                if let Some(t) = info.temperature_c {
+                    row(ui, "Température", &format!("{t:.1} °C"));
+                }
+                ui.label(
+                    RichText::new("Calculé à partir des données brutes de la batterie : peut différer d'un point de Réglages.")
+                        .small()
+                        .color(MUTED),
+                );
+            });
+
+            // Storage.
+            theme::section(&mut cols[0], |ui| {
+                ui.label(RichText::new("Stockage").font(theme::semibold(16.0)));
+                match (info.disk_total, info.disk_free) {
+                    (Some(total), Some(free)) if total > 0 => {
+                        let used = total.saturating_sub(free);
+                        big_value(ui, &gb(used), &format!("utilisés sur {}", gb(total)));
+                        let f = used as f32 / total as f32;
+                        bar(ui, f, if f > 0.9 { WARN } else { theme::ACCENT });
+                        ui.label(format!("{} libres", gb(free)));
+                    }
+                    _ => {
+                        ui.label(RichText::new("Indisponible").color(MUTED));
+                    }
+                }
+            });
+
+            // Device details.
+            theme::section(&mut cols[1], |ui| {
+                ui.label(RichText::new("Appareil").font(theme::semibold(16.0)));
+                row(ui, "Modèle", &info.model_name);
+                row(ui, "Identifiant", &info.model_id);
+                row(ui, "iOS", &format!("{} ({})", info.ios, info.build));
+                if !info.region.is_empty() {
+                    row(ui, "Région", &info.region);
+                }
+                if let Some(n) = info.user_apps {
+                    row(ui, "Apps installées", &n.to_string());
+                }
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Numéro de série").color(MUTED));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.small_button(if *show_serial { "Masquer" } else { "Afficher" }).clicked() {
+                            *show_serial = !*show_serial;
+                        }
+                        ui.label(if *show_serial { info.serial.clone() } else { "••••••••••".into() });
+                    });
+                });
+            });
+        });
+
+        ui.label(RichText::new("Lecture seule : iconpush ne modifie rien sur ton iPhone.").small().color(MUTED));
+    });
+    refresh
+}
+
 // ------------------------------------------------------------------ library
 
 #[derive(Clone, PartialEq)]
